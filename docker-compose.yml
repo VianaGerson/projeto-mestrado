@@ -1,0 +1,42 @@
+version: "3.1"
+
+volumes:
+  postgres-data:
+
+services:
+  postgres:
+    image: postgres:11.7-alpine
+    container_name: backend-postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks: 
+      - backend-network
+    env_file:
+      - backend/.env
+    ports:
+      - "5454:5432"
+
+  webserver:
+    image: nginx:alpine
+    container_name: backend_server
+    working_dir: /app
+    networks: 
+      - backend-network
+    volumes:
+      - .:/app
+      - ./phpdocker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "8000:80"
+
+  backend:
+    build: phpdocker/backend
+    container_name: backend_fpm
+    networks: 
+      - backend-network
+    volumes:
+      - ./backend:/app
+      - ./phpdocker/backend/php-ini-overrides.ini:/etc/php/7.4/fpm/conf.d/99-overrides.ini
+
+networks: 
+  backend-network:
+    driver: bridge
